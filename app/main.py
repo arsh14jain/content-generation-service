@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 
 from config import config
 from app.database import init_db
-from app.routes import topics, posts
+from app.routes import topics, posts, mobile
 from app.services.scheduler import post_scheduler
 from app.services.gemini_service import gemini_service
 
@@ -73,6 +73,7 @@ app.add_middleware(
 # Include routers
 app.include_router(topics.router, prefix="/api/v1")
 app.include_router(posts.router, prefix="/api/v1")
+app.include_router(mobile.router, prefix="/api/v1")
 
 @app.get("/")
 async def root():

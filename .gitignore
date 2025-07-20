@@ -190,3 +190,10 @@ cache/
 test_*.py
 tests/temp/
 *.pid
+
+# React Native / Expo
+.expo/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

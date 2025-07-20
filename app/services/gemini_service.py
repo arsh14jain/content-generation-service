@@ -11,7 +11,7 @@ class GeminiService:
     def __init__(self):
         # Set the API key for the Google Gemini client
         os.environ['GEMINI_API_KEY'] = config.GEMINI_API_KEY
-        self.client = genai.Client()
+        self.client = genai.Client(api_key=config.GEMINI_API_KEY)
         self.model = "gemini-2.5-flash"
     
     async def close(self):

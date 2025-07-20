@@ -10,6 +10,7 @@ A Python backend service for generating educational content snippets using the G
 - RESTful API: Complete API for topic and post management
 - Background Scheduling: Configurable automated post generation every 6 hours
 - Simple Database Setup: SQL schema for easy database initialization
+- Mobile App: React Native mobile application for content consumption with dark theme
 
 ## Prerequisites
 
@@ -219,6 +220,61 @@ educational_content_backend/
 
 [Add your license information here]
 
+## Mobile App
+
+The project includes a React Native mobile application for consuming the educational content feed.
+
+### Mobile App Features
+- Dark theme scrolling feed
+- Like/dislike functionality with optimistic updates
+- Infinite scroll with pagination
+- Pull-to-refresh
+- Offline error handling
+- Performance optimized with FlatList
+
+### Running the Mobile App
+
+1. Navigate to the mobile app directory:
+   ```bash
+   cd mobile-app
+   ```
+
+2. Run the setup script:
+   ```bash
+   ./setup.sh
+   ```
+
+3. Start the development server:
+   ```bash
+   npm start
+   ```
+
+4. Use Expo Go app on your phone to scan the QR code, or run in simulator:
+   ```bash
+   npm run ios     # iOS simulator
+   npm run android # Android emulator
+   ```
+
+### Mobile API Endpoints
+
+The backend provides mobile-optimized endpoints:
+
+- `GET /api/v1/mobile/feed` - Optimized feed with pagination metadata
+- `PUT /api/v1/mobile/posts/{id}/feedback` - Mobile-optimized feedback updates
+- `GET /api/v1/mobile/stats` - Basic statistics for mobile dashboard
+
+### Configuration for Mobile
+
+For physical devices, update the API base URL in `mobile-app/src/constants/config.js`:
+
+```javascript
+export const API_CONFIG = {
+  BASE_URL: 'http://YOUR_IP_ADDRESS:8000', // Replace with your computer's IP
+  // ...
+};
+```
+
 ## Support
 
-[Add support information here]
+For issues related to the backend service, check the logs in the console output.
+For mobile app issues, use React Native debugging tools and check the Expo development tools.
