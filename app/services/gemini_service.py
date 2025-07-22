@@ -21,41 +21,82 @@ class GeminiService:
     def _build_prompt(self, topic_name: str, topic_description: str, past_posts: List[Post]) -> str:
         """Build the prompt for Gemini API"""
         
-        base_prompt = """You are an educational content creator specializing in writing concise and informative educational snippets (maximum 200 characters) on various topics. Your goal is to help users learn more in an accessible and engaging way within a custom educational platform. These snippets are not for social media like Twitter, but designed for a learning environment.
+        base_prompt = """### **Prompt: Educational Content Snippet Creator**
 
-The user will provide details about the topic, including its name and a brief description. Crucially, they will also share examples of past snippets they liked, disliked, or want to "dive deep" into.
+**Role:** You are an educational content creator for a learning platform. Your task is to write engaging, concise, and informative educational snippets. These are not for social media, but for an internal learning environment.
 
-Here's the input structure you'll receive:
-topic:
-name: [Topic Name]
-description: [Brief description of the topic]
-past_snippets:
-- t1: [Snippet content 1] -> like (This snippet's style, tone, and content should be emulated.)
-- t2: [Snippet content 2] -> dont like / not interested (Avoid this style, tone, or content.)
-- t3: [Snippet content 3] -> dive deep (Create snippets that provide more detailed explanations or break down complex aspects of this specific sub-topic into digestible parts.)
+-----
 
-Your task is to create 10 new, unique educational snippets about the given topic. Ensure these snippets:
-1. **Align with user preferences:** Emulate the style and tone of 'liked' snippets and avoid elements from 'disliked' ones.
-2. **Are engaging and informative:** Use emojis (if appropriate for a learning context), intriguing questions, and surprising facts or statistics to capture attention.
-3. **Are concise and clear:** Adhere strictly to the 200-character limit per snippet. Avoid jargon where possible, or explain it simply and briefly.
-4. **Address "dive deep" sub-topics:** For any 'dive deep' requests, provide more in-depth but still concise explanations, or simplify complex concepts.
-5. **Maintain an educational tone:** Focus on delivering clear learning points without trying to be "viral" or overly informal.
-6. **Avoid:** Overly academic language, rephrasing past liked snippets, sensationalism, misleading information, or elements specific to social media like hashtags.
+**Task:** Create 10 new, unique educational snippets for the given topic, addressing user preferences and content goals.
 
-Present each snippet as a numbered list item."""
+-----
+
+**Input Structure:**
+The user will provide a topic and examples of liked, disliked, and "dive deep" content.
+
+  - `topic`: Includes the name and a detailed **description** that captures the specific "flavor" of content the user is interested in.
+  - `preferences`:
+      - `liked_snippets`: Examples of style, tone, and content to be inspired by.
+      - `disliked_snippets`: Examples to avoid in style, tone, or content.
+      - `dive_deep_topics`: Specific sub-topics requiring more detailed but still concise explanation.
+
+-----
+
+**Rules for Snippet Creation:**
+
+1.  **Length:** Limit each snippet to a maximum of **100 words**. Vary the length of the snippets to avoid a monotonous feel.
+2.  **Style & Variety:** Do not make all snippets similar. The snippets should be inspired by the `liked_snippets` and avoid the `disliked_snippets`, but they should not be clones. Randomize the content type (e.g., a surprising fact, a question-and-answer, a simple definition, a practical application) and tone.
+3.  **Content Focus:** Give significant importance to the `topic` **description** to capture its unique content "flavor."
+4.  **In-depth Topics:** Address the `dive_deep_topics` directly by providing simplified explanations of complex concepts, even if it requires a longer snippet within the word limit.
+5.  **Engagement:** Use intriguing questions, surprising facts, or appropriate emojis to capture attention.
+6.  **Tone:** Maintain a clear, educational, and non-sensational tone. Avoid overly academic language or rephrasing past examples.
+7.  **Avoid:** Sensationalism, misleading information, jargon without simple explanation, or social media-specific elements like hashtags.
+
+-----
+
+**Output Format:**
+Present the 10 snippets as a numbered list.
+
+-----"""
         
         topic_section = f"""
 topic:
-name: {topic_name}
-description: {topic_description}
-past_snippets:"""
+    name: "{topic_name}"
+    description: "{topic_description or 'Educational content focused on practical understanding and real-world applications.'}"
+preferences:"""
         
         if not past_posts:
-            topic_section += "\n(No past snippets available - create diverse, engaging educational content)"
+            topic_section += """
+    liked_snippets: []
+    disliked_snippets: []
+    dive_deep_topics: []
+    (No past snippets available - create diverse, engaging educational content)"""
         else:
-            for i, post in enumerate(past_posts, 1):
-                status = "like" if post.like_status else "dont like" if post.dislike_status else "dive deep" if post.deep_dive else "neutral"
-                topic_section += f"\n- t{i}: {post.post_content} -> {status}"
+            # Categorize posts by feedback type
+            liked_posts = [post for post in past_posts if post.like_status]
+            disliked_posts = [post for post in past_posts if post.dislike_status]
+            dive_deep_posts = [post for post in past_posts if post.deep_dive]
+            
+            topic_section += "\n    liked_snippets:"
+            if liked_posts:
+                for post in liked_posts:
+                    topic_section += f'\n        - "{post.post_content}"'
+            else:
+                topic_section += "\n        []"
+            
+            topic_section += "\n    disliked_snippets:"
+            if disliked_posts:
+                for post in disliked_posts:
+                    topic_section += f'\n        - "{post.post_content}"'
+            else:
+                topic_section += "\n        []"
+            
+            topic_section += "\n    dive_deep_topics:"
+            if dive_deep_posts:
+                for post in dive_deep_posts:
+                    topic_section += f'\n        - "{post.post_content}"'
+            else:
+                topic_section += "\n        []"
         
         return base_prompt + topic_section
     
@@ -102,28 +143,47 @@ past_snippets:"""
         posts = []
         lines = content.strip().split('\n')
         
+        # Look for numbered list items
+        current_post = ""
         for line in lines:
             line = line.strip()
-            # Look for numbered list items
-            if line and (line[0].isdigit() or line.startswith(('•', '-', '*'))):
-                # Remove numbering and list markers
-                clean_line = line
-                # Remove common numbering patterns
-                import re
-                clean_line = re.sub(r'^\d+\.?\s*', '', clean_line)
-                clean_line = re.sub(r'^[•\-*]\s*', '', clean_line)
-                clean_line = clean_line.strip()
+            
+            # Check if this is the start of a new numbered item
+            if line and line[0].isdigit() and ('.' in line or ')' in line):
+                # Save previous post if it exists
+                if current_post:
+                    # Count words (rough approximation for 100-word limit)
+                    word_count = len(current_post.split())
+                    if word_count <= 120 and len(current_post.strip()) > 20:  # Allow some buffer
+                        posts.append(current_post.strip())
                 
-                if clean_line and len(clean_line) <= 200:
-                    posts.append(clean_line)
+                # Start new post by removing numbering
+                import re
+                clean_line = re.sub(r'^\d+[.)]\s*', '', line)
+                current_post = clean_line
+            elif current_post and line:
+                # Continue building current post
+                current_post += " " + line
+            elif line and not current_post:
+                # Handle cases where numbering might be different
+                if line.startswith(('•', '-', '*')):
+                    clean_line = re.sub(r'^[•\-*]\s*', '', line)
+                    current_post = clean_line
         
-        # Fallback: if no numbered items found, try to split by sentences
+        # Don't forget the last post
+        if current_post:
+            word_count = len(current_post.split())
+            if word_count <= 120 and len(current_post.strip()) > 20:
+                posts.append(current_post.strip())
+        
+        # Fallback: if no numbered items found, try to split by double newlines or sentences
         if not posts:
-            sentences = content.split('.')
-            for sentence in sentences:
-                sentence = sentence.strip()
-                if sentence and len(sentence) <= 200 and len(sentence) > 20:
-                    posts.append(sentence)
+            paragraphs = content.split('\n\n')
+            for paragraph in paragraphs:
+                paragraph = paragraph.strip()
+                word_count = len(paragraph.split())
+                if paragraph and word_count <= 120 and word_count >= 5:
+                    posts.append(paragraph)
         
         return posts[:config.POSTS_PER_TOPIC]  # Limit to configured number
 
