@@ -6,13 +6,14 @@ import logging
 
 from app.database import get_db
 from app.models import Topic, TopicCreate, TopicResponse, TopicWithPosts
+from app.auth import get_api_key_dependency
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/topics", tags=["topics"])
 
 @router.post("/", response_model=TopicResponse, status_code=status.HTTP_201_CREATED)
-async def create_topic(topic: TopicCreate, db: Session = Depends(get_db)):
+async def create_topic(topic: TopicCreate, db: Session = Depends(get_db), _: None = get_api_key_dependency()):
     """Create a new topic"""
     try:
         db_topic = Topic(
@@ -42,7 +43,7 @@ async def create_topic(topic: TopicCreate, db: Session = Depends(get_db)):
         )
 
 @router.get("/", response_model=List[TopicResponse])
-async def get_topics(db: Session = Depends(get_db)):
+async def get_topics(db: Session = Depends(get_db), _: None = get_api_key_dependency()):
     """Get all topics"""
     try:
         topics = db.query(Topic).order_by(Topic.created_at.desc()).all()
@@ -55,7 +56,7 @@ async def get_topics(db: Session = Depends(get_db)):
         )
 
 @router.get("/{topic_id}", response_model=TopicResponse)
-async def get_topic(topic_id: int, db: Session = Depends(get_db)):
+async def get_topic(topic_id: int, db: Session = Depends(get_db), _: None = get_api_key_dependency()):
     """Get a specific topic by ID"""
     try:
         topic = db.query(Topic).filter(Topic.id == topic_id).first()
@@ -79,7 +80,8 @@ async def get_topic_with_posts(
     topic_id: int, 
     limit: int = 50,
     offset: int = 0,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: None = get_api_key_dependency()
 ):
     """Get a topic with its posts"""
     try:
@@ -120,7 +122,7 @@ async def get_topic_with_posts(
         )
 
 @router.delete("/{topic_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_topic(topic_id: int, db: Session = Depends(get_db)):
+async def delete_topic(topic_id: int, db: Session = Depends(get_db), _: None = get_api_key_dependency()):
     """Delete a topic and all its posts"""
     try:
         topic = db.query(Topic).filter(Topic.id == topic_id).first()

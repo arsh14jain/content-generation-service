@@ -1,6 +1,7 @@
 // API Configuration
 export const API_CONFIG = {
   BASE_URL: 'http://localhost:8000',
+  API_KEY: 'your_secure_api_key_here', // Replace with your actual API key
   ENDPOINTS: {
     POSTS: '/api/v1/posts',
     MOBILE_FEED: '/api/v1/mobile/feed',

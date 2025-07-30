@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING } from '../constants/config';
+import { COLORS, SPACING, API_CONFIG } from '../constants/config';
 
 const CompleteFeedScreen = () => {
   const [posts, setPosts] = useState([]);
@@ -40,7 +40,13 @@ const CompleteFeedScreen = () => {
       
       const currentOffset = reset ? 0 : offset;
       const response = await fetch(
-        `http://localhost:8000/api/v1/mobile/feed?limit=${LIMIT}&offset=${currentOffset}`
+        `${API_CONFIG.BASE_URL}/api/v1/mobile/feed?limit=${LIMIT}&offset=${currentOffset}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key': API_CONFIG.API_KEY,
+          },
+        }
       );
       
       if (!response.ok) {
@@ -143,10 +149,11 @@ const CompleteFeedScreen = () => {
       );
 
       // Send to backend
-      const response = await fetch(`http://localhost:8000/api/v1/mobile/posts/${postId}/feedback`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/mobile/posts/${postId}/feedback`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'X-API-Key': API_CONFIG.API_KEY,
         },
         body: JSON.stringify({
           like_status: newLikeStatus,
@@ -190,10 +197,11 @@ const CompleteFeedScreen = () => {
       );
 
       // Send to backend
-      const response = await fetch(`http://localhost:8000/api/v1/mobile/posts/${postId}/feedback`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/v1/mobile/posts/${postId}/feedback`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'X-API-Key': API_CONFIG.API_KEY,
         },
         body: JSON.stringify({
           dislike_status: newDislikeStatus,

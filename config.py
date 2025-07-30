@@ -8,6 +8,7 @@ load_dotenv()
 class Config:
     # API Configuration
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "your_gemini_api_key_here")
+    API_KEY: str = os.getenv("API_KEY", "your_secure_api_key_here")
     
     # Scheduling Configuration
     POST_GENERATION_INTERVAL_HOURS: int = int(os.getenv("POST_GENERATION_INTERVAL_HOURS", "6"))

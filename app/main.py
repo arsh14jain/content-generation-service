@@ -9,6 +9,7 @@ from app.database import init_db
 from app.routes import topics, posts, mobile
 from app.services.scheduler import post_scheduler
 from app.services.gemini_service import gemini_service
+from app.auth import is_api_key_configured
 
 # Configure logging
 logging.basicConfig(
@@ -58,7 +59,10 @@ app = FastAPI(
     title="Educational Content Generation Service",
     description="A backend service for generating educational content snippets using Gemini API",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    swagger_ui_parameters={
+        "persistAuthorization": True,
+    }
 )
 
 # Add CORS middleware
@@ -95,7 +99,8 @@ async def health_check():
             "timestamp": "2023-01-01T00:00:00Z",  # Will be set by server
             "scheduler": scheduler_status,
             "database": "connected",
-            "gemini_api": "configured" if config.GEMINI_API_KEY != "your_gemini_api_key_here" else "not_configured"
+            "gemini_api": "configured" if config.GEMINI_API_KEY != "your_gemini_api_key_here" else "not_configured",
+            "api_key": "configured" if is_api_key_configured() else "not_configured"
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")

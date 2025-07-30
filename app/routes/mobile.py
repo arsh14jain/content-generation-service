@@ -6,6 +6,7 @@ import logging
 from app.database import get_db
 from app.models import Post, Topic, PostResponse, PostWithTopic, PostFeedback
 from pydantic import BaseModel
+from app.auth import get_api_key_dependency
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,8 @@ async def get_mobile_feed(
     limit: int = Query(20, ge=1, le=50, description="Number of posts to return"),
     offset: int = Query(0, ge=0, description="Number of posts to skip"),
     topic_id: Optional[int] = Query(None, description="Filter by topic ID"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: None = get_api_key_dependency()
 ):
     """Get optimized feed for mobile clients with metadata"""
     try:
@@ -88,7 +90,8 @@ async def get_mobile_feed(
 async def update_mobile_post_feedback(
     post_id: int,
     feedback: PostFeedback,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: None = get_api_key_dependency()
 ):
     """Update post feedback optimized for mobile clients"""
     try:
@@ -139,7 +142,7 @@ async def update_mobile_post_feedback(
         )
 
 @router.get("/stats", response_model=dict)
-async def get_mobile_stats(db: Session = Depends(get_db)):
+async def get_mobile_stats(db: Session = Depends(get_db), _: None = get_api_key_dependency()):
     """Get basic statistics for mobile dashboard"""
     try:
         total_posts = db.query(Post).count()

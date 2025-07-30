@@ -6,6 +6,7 @@ import logging
 from app.database import get_db
 from app.models import Post, Topic, PostResponse, PostWithTopic, PostFeedback, PostCreate
 from app.services.gemini_service import gemini_service
+from app.auth import get_api_key_dependency
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,8 @@ async def get_posts(
     deep_dive: Optional[bool] = Query(None, description="Filter by deep dive status"),
     limit: int = Query(50, ge=1, le=100, description="Number of posts to return"),
     offset: int = Query(0, ge=0, description="Number of posts to skip"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: None = get_api_key_dependency()
 ):
     """Get posts with optional filtering"""
     try:
@@ -66,7 +68,7 @@ async def get_posts(
         )
 
 @router.get("/{post_id}", response_model=PostWithTopic)
-async def get_post(post_id: int, db: Session = Depends(get_db)):
+async def get_post(post_id: int, db: Session = Depends(get_db), _: None = get_api_key_dependency()):
     """Get a specific post by ID"""
     try:
         post = db.query(Post).options(joinedload(Post.topic)).filter(Post.post_id == post_id).first()
@@ -105,7 +107,8 @@ async def get_post(post_id: int, db: Session = Depends(get_db)):
 async def update_post_feedback(
     post_id: int, 
     feedback: PostFeedback, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: None = get_api_key_dependency()
 ):
     """Update post feedback (like, dislike, deep dive status)"""
     try:
@@ -151,7 +154,8 @@ async def update_post_feedback(
 @router.post("/generate", response_model=dict)
 async def generate_posts_manually(
     topic_id: Optional[int] = Query(None, description="Generate posts for specific topic, or all topics if not provided"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _: None = get_api_key_dependency()
 ):
     """Manually trigger post generation for testing"""
     try:
@@ -237,7 +241,7 @@ async def generate_posts_manually(
         )
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_post(post_id: int, db: Session = Depends(get_db)):
+async def delete_post(post_id: int, db: Session = Depends(get_db), _: None = get_api_key_dependency()):
     """Delete a specific post"""
     try:
         post = db.query(Post).filter(Post.post_id == post_id).first()
