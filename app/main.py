@@ -68,16 +68,26 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
+    allow_origins=[
+        "*",  # Allow all origins for development
+        "http://localhost:19006",  # Expo web dev server
+        "http://localhost:19000",  # Expo dev server
+        "exp://localhost:19000",   # Expo mobile dev server
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key", "Accept", "Origin"],
 )
 
 # Include routers
 app.include_router(topics.router, prefix="/api/v1")
 app.include_router(posts.router, prefix="/api/v1")
 app.include_router(mobile.router, prefix="/api/v1")
+
+@app.options("/{path:path}")
+async def options_handler():
+    """Handle CORS preflight requests"""
+    return {"message": "OK"}
 
 @app.get("/")
 async def root():

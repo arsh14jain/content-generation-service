@@ -1,7 +1,9 @@
-// API Configuration
+import Constants from 'expo-constants';
+
+// API Configuration - loaded from environment variables
 export const API_CONFIG = {
-  BASE_URL: 'http://localhost:8000',
-  API_KEY: 'your_secure_api_key_here', // Replace with your actual API key
+  BASE_URL: Constants.expoConfig?.extra?.apiBaseUrl || 'http://localhost:8000',
+  API_KEY: Constants.expoConfig?.extra?.apiKey || 'your_secure_api_key_here',
   ENDPOINTS: {
     POSTS: '/api/v1/posts',
     MOBILE_FEED: '/api/v1/mobile/feed',
